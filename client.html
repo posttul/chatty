@@ -1,0 +1,9 @@
+hello
+<script>
+
+const evtSource = new EventSource("http://localhost:4000");
+
+evtSource.onmessage = function(event) {
+  document.write("<p>"+event.data+"</p>")
+};
+</script>
