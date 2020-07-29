@@ -1,9 +1,25 @@
 hello
 <script>
 
-const evtSource = new EventSource("http://localhost:4000");
+const url = "https://localhost:4000?access_token=12345"
+const evtSource = new EventSource(url);
+const evtSource2 = new EventSource(url+"123");
+const evtSource3 = new EventSource(url);
+// const evtSource4 = new EventSource(url);
+// const evtSource5 = new EventSource(url);
+// const evtSource6 = new EventSource(url);
+// const evtSource7 = new EventSource(url);
 
-evtSource.onmessage = function(event) {
-  document.write("<p>"+event.data+"</p>")
+var f = function(t){return function(event) {
+  document.write(`<p>${t}`+event.data+"</p>")
 };
+}
+
+evtSource.onmessage = f(1)
+evtSource2.onmessage = f(2)
+evtSource3.onmessage = f(3)
+// evtSource4.onmessage = f(4)
+// evtSource5.onmessage = f(5)
+// evtSource6.onmessage = f(6)
+// evtSource7.onmessage = f(7)
 </script>

@@ -22,6 +22,8 @@ type Broker struct {
 	clients map[chan []byte]bool
 
 	file http.Handler
+
+	tokens map[string]bool
 }
 
 func NewServer() (broker *Broker) {
@@ -34,6 +36,7 @@ func NewServer() (broker *Broker) {
 		closingClients: make(chan chan []byte),
 		clients:        make(map[chan []byte]bool),
 		file:           file,
+		tokens:         make(map[string]bool, 0),
 	}
 
 	// Set it running - listening and broadcasting events
@@ -44,11 +47,21 @@ func NewServer() (broker *Broker) {
 
 func (broker *Broker) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
-	log.Printf("%s", req.URL.Path)
+	q := req.URL.Query()
+	if _, ok := broker.tokens[q.Get("access_token")]; ok {
+		rw.WriteHeader(400)
+		return
+	}
+
+	if q.Get("access_token") != "" {
+		broker.tokens[q.Get("access_token")] = true
+	}
+
 	if req.URL.Path == "/client.html" {
 		broker.file.ServeHTTP(rw, req)
 		return
 	}
+
 	// Make sure that the writer supports flushing.
 	//
 	flusher, ok := rw.(http.Flusher)
@@ -129,13 +142,13 @@ func main() {
 
 	go func() {
 		for {
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Millisecond * 500)
 			eventString := fmt.Sprintf("the time is %v", time.Now())
 			log.Println("Receiving event")
 			broker.Notifier <- []byte(eventString)
 		}
 	}()
 
-	log.Fatal("HTTP server error: ", http.ListenAndServe("localhost:4000", broker))
+	log.Fatal("HTTP server error: ", http.ListenAndServeTLS(":4000", "./server.crt", "./server.key", broker))
 
 }
